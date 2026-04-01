@@ -1,0 +1,203 @@
+local RewimLib = {}
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+function RewimLib:CreateWindow(titulo)
+    local Gui = Instance.new("ScreenGui")
+    Gui.Name = "MinhaUI"
+    Gui.Parent = CoreGui
+    Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    -- Janela principal
+    local Janela = Instance.new("Frame")
+    Janela.Name = "Janela"
+    Janela.Parent = Gui
+    Janela.AnchorPoint = Vector2.new(0.5, 0.5)
+    Janela.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Janela.Size = UDim2.new(0, 500, 0, 350)
+    Janela.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Janela.BorderSizePixel = 0
+    Instance.new("UICorner", Janela).CornerRadius = UDim.new(0, 6)
+
+    -- Barra do topo (header)
+    local Header = Instance.new("Frame")
+    Header.Name = "Header"
+    Header.Parent = Janela
+    Header.Size = UDim2.new(1, 0, 0, 35)
+    Header.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    Header.BorderSizePixel = 0
+    Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 6)
+
+    -- Título no header
+    local Titulo = Instance.new("TextLabel")
+    Titulo.Parent = Header
+    Titulo.Size = UDim2.new(1, -10, 1, 0)
+    Titulo.Position = UDim2.new(0, 10, 0, 0)
+    Titulo.BackgroundTransparency = 1
+    Titulo.Font = Enum.Font.GothamBold
+    Titulo.Text = titulo
+    Titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Titulo.TextSize = 16
+    Titulo.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Área de conteúdo (onde os elementos ficam)
+    local Conteudo = Instance.new("ScrollingFrame")
+    Conteudo.Name = "Conteudo"
+    Conteudo.Parent = Janela
+    Conteudo.Position = UDim2.new(0, 10, 0, 45)
+    Conteudo.Size = UDim2.new(1, -20, 1, -55)
+    Conteudo.BackgroundTransparency = 1
+    Conteudo.BorderSizePixel = 0
+    Conteudo.ScrollBarThickness = 4
+    Conteudo.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+    Conteudo.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+    -- Organiza os elementos em lista
+    local Lista = Instance.new("UIListLayout")
+    Lista.Parent = Conteudo
+    Lista.SortOrder = Enum.SortOrder.LayoutOrder
+    Lista.Padding = UDim.new(0, 6)
+
+    -- Atualiza o tamanho do scroll automaticamente
+    Lista:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        Conteudo.CanvasSize = UDim2.new(0, 0, 0, Lista.AbsoluteContentSize.Y + 10)
+    end)
+
+    -- Arrastar a janela
+    local arrastando = false
+    local posicaoMouse, posicaoJanela
+
+    Header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            arrastando = true
+            posicaoMouse = input.Position
+            posicaoJanela = Janela.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    arrastando = false
+                end
+            end)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if arrastando and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - posicaoMouse
+            Janela.Position = UDim2.new(
+                posicaoJanela.X.Scale,
+                posicaoJanela.X.Offset + delta.X,
+                posicaoJanela.Y.Scale,
+                posicaoJanela.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    local Elementos = {}
+    
+        function Elementos:CreateButton(nome, callback)
+            callback = callback or function() end
+
+            local Botao = Instance.new("TextButton")
+            Botao.Parent = Conteudo
+            Botao.Size = UDim2.new(1, 0, 0, 35)
+            Botao.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            Botao.BorderSizePixel = 0
+            Botao.Font = Enum.Font.GothamSemibold
+            Botao.Text = nome
+            Botao.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Botao.TextSize = 15
+            Botao.AutoButtonColor = false
+            Instance.new("UICorner", Botao).CornerRadius = UDim.new(0, 5)
+
+            -- Efeito ao passar o mouse
+            Botao.MouseEnter:Connect(function()
+                TweenService:Create(Botao, TweenInfo.new(0.2), {
+                    BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+                }):Play()
+            end)
+
+            Botao.MouseLeave:Connect(function()
+                TweenService:Create(Botao, TweenInfo.new(0.2), {
+                    BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                }):Play()
+            end)
+
+            Botao.MouseButton1Click:Connect(function()
+                pcall(callback)
+            end)
+        end
+
+        function Elementos:CreateToggle(nome, padrao, callback)
+            padrao = padrao or false
+            callback = callback or function() end
+
+            local ativado = padrao
+
+            local Frame = Instance.new("Frame")
+            Frame.Parent = Conteudo
+            Frame.Size = UDim2.new(1, 0, 0, 35)
+            Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            Frame.BorderSizePixel = 0
+            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 5)
+
+            local NomeLabel = Instance.new("TextLabel")
+            NomeLabel.Parent = Frame
+            NomeLabel.Position = UDim2.new(0, 10, 0, 0)
+            NomeLabel.Size = UDim2.new(0.7, 0, 1, 0)
+            NomeLabel.BackgroundTransparency = 1
+            NomeLabel.Font = Enum.Font.GothamSemibold
+            NomeLabel.Text = nome
+            NomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            NomeLabel.TextSize = 15
+            NomeLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+            -- Fundo do toggle
+            local ToggleFundo = Instance.new("Frame")
+            ToggleFundo.Parent = Frame
+            ToggleFundo.AnchorPoint = Vector2.new(1, 0.5)
+            ToggleFundo.Position = UDim2.new(1, -10, 0.5, 0)
+            ToggleFundo.Size = UDim2.new(0, 40, 0, 20)
+            ToggleFundo.BackgroundColor3 = ativado and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(70, 70, 70)
+            ToggleFundo.BorderSizePixel = 0
+            Instance.new("UICorner", ToggleFundo).CornerRadius = UDim.new(1, 0)
+
+            -- Bolinha do toggle
+            local Bolinha = Instance.new("Frame")
+            Bolinha.Parent = ToggleFundo
+            Bolinha.AnchorPoint = Vector2.new(0.5, 0.5)
+            Bolinha.Position = ativado and UDim2.new(0.75, 0, 0.5, 0) or UDim2.new(0.25, 0, 0.5, 0)
+            Bolinha.Size = UDim2.new(0, 14, 0, 14)
+            Bolinha.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            Bolinha.BorderSizePixel = 0
+            Instance.new("UICorner", Bolinha).CornerRadius = UDim.new(1, 0)
+
+            -- Clique no frame inteiro
+            local Clique = Instance.new("TextButton")
+            Clique.Parent = Frame
+            Clique.Size = UDim2.new(1, 0, 1, 0)
+            Clique.BackgroundTransparency = 1
+            Clique.Text = ""
+
+            Clique.MouseButton1Click:Connect(function()
+                ativado = not ativado
+
+                TweenService:Create(ToggleFundo, TweenInfo.new(0.2), {
+                    BackgroundColor3 = ativado and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(70, 70, 70)
+                }):Play()
+
+                TweenService:Create(Bolinha, TweenInfo.new(0.2), {
+                    Position = ativado and UDim2.new(0.75, 0, 0.5, 0) or UDim2.new(0.25, 0, 0.5, 0)
+                }):Play()
+
+                pcall(callback, ativado)
+            end)
+
+            pcall(callback, ativado)
+        end
+
+    return Elementos
+end
+
+return MinhaBiblioteca
