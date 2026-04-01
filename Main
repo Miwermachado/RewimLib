@@ -200,4 +200,4 @@ function RewimLib:CreateWindow(titulo)
     return Elementos
 end
 
-return MinhaBiblioteca
+return RewimLib
