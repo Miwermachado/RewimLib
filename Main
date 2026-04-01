@@ -3,12 +3,69 @@ local RewimLib = {}
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
 
-function RewimLib:CreateWindow(titulo)
+local ACCENT = Color3.fromRGB(220, 130, 40)
+local BG_DARK = Color3.fromRGB(18, 18, 20)
+local BG_MID = Color3.fromRGB(24, 24, 27)
+local BG_LIGHT = Color3.fromRGB(32, 32, 36)
+local TEXT_PRIMARY = Color3.fromRGB(240, 240, 240)
+local TEXT_SECONDARY = Color3.fromRGB(140, 140, 150)
+local TOGGLE_OFF = Color3.fromRGB(55, 55, 62)
+
+local function corner(parent, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius or 6)
+    c.Parent = parent
+    return c
+end
+
+local function tween(obj, props, t)
+    TweenService:Create(obj, TweenInfo.new(t or 0.2, Enum.EasingStyle.Quad), props):Play()
+end
+
+local function label(parent, props)
+    local l = Instance.new("TextLabel")
+    l.BackgroundTransparency = 1
+    l.Font = Enum.Font.GothamSemibold
+    l.TextSize = 14
+    l.TextColor3 = TEXT_PRIMARY
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    for k, v in pairs(props) do l[k] = v end
+    l.Parent = parent
+    return l
+end
+
+function RewimLib:CreateWindow(titulo, subtitulo)
+    subtitulo = subtitulo or ""
+
+    -- Destroi instâncias antigas
+    if CoreGui:FindFirstChild("RewimUI") then
+        CoreGui:FindFirstChild("RewimUI"):Destroy()
+    end
+
     local Gui = Instance.new("ScreenGui")
-    Gui.Name = "MinhaUI"
+    Gui.Name = "RewimUI"
     Gui.Parent = CoreGui
     Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    Gui.ResetOnSpawn = false
+
+    -- Sombra
+    local Shadow = Instance.new("ImageLabel")
+    Shadow.Name = "Shadow"
+    Shadow.Parent = Gui
+    Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+    Shadow.Position = UDim2.new(0.5, 0, 0.5, 8)
+    Shadow.Size = UDim2.new(0, 720, 0, 430)
+    Shadow.BackgroundTransparency = 1
+    Shadow.Image = "rbxassetid://7912134082"
+    Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    Shadow.ImageTransparency = 0.4
+    Shadow.ScaleType = Enum.ScaleType.Slice
+    Shadow.SliceCenter = Rect.new(50, 50, 450, 450)
+    Shadow.ZIndex = 0
 
     -- Janela principal
     local Janela = Instance.new("Frame")
@@ -16,56 +73,299 @@ function RewimLib:CreateWindow(titulo)
     Janela.Parent = Gui
     Janela.AnchorPoint = Vector2.new(0.5, 0.5)
     Janela.Position = UDim2.new(0.5, 0, 0.5, 0)
-    Janela.Size = UDim2.new(0, 500, 0, 350)
-    Janela.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Janela.Size = UDim2.new(0, 700, 0, 410)
+    Janela.BackgroundColor3 = BG_DARK
     Janela.BorderSizePixel = 0
-    Instance.new("UICorner", Janela).CornerRadius = UDim.new(0, 6)
+    Janela.ZIndex = 1
+    corner(Janela, 10)
 
-    -- Barra do topo (header)
+    -- Borda sutil
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = Color3.fromRGB(50, 50, 58)
+    Stroke.Thickness = 1
+    Stroke.Parent = Janela
+
+    -- ═══════════════════ HEADER ═══════════════════
     local Header = Instance.new("Frame")
     Header.Name = "Header"
     Header.Parent = Janela
-    Header.Size = UDim2.new(1, 0, 0, 35)
-    Header.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    Header.Size = UDim2.new(1, 0, 0, 65)
+    Header.BackgroundColor3 = BG_MID
     Header.BorderSizePixel = 0
-    Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 6)
+    Header.ZIndex = 2
+    corner(Header, 10)
 
-    -- Título no header
-    local Titulo = Instance.new("TextLabel")
-    Titulo.Parent = Header
-    Titulo.Size = UDim2.new(1, -10, 1, 0)
-    Titulo.Position = UDim2.new(0, 10, 0, 0)
-    Titulo.BackgroundTransparency = 1
-    Titulo.Font = Enum.Font.GothamBold
-    Titulo.Text = titulo
-    Titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Titulo.TextSize = 16
-    Titulo.TextXAlignment = Enum.TextXAlignment.Left
+    -- Tampa do canto inferior do header (para não ter borda arredondada embaixo)
+    local HeaderCover = Instance.new("Frame")
+    HeaderCover.Parent = Header
+    HeaderCover.Position = UDim2.new(0, 0, 0.5, 0)
+    HeaderCover.Size = UDim2.new(1, 0, 0.5, 0)
+    HeaderCover.BackgroundColor3 = BG_MID
+    HeaderCover.BorderSizePixel = 0
+    HeaderCover.ZIndex = 2
 
-    -- Área de conteúdo (onde os elementos ficam)
-    local Conteudo = Instance.new("ScrollingFrame")
-    Conteudo.Name = "Conteudo"
-    Conteudo.Parent = Janela
-    Conteudo.Position = UDim2.new(0, 10, 0, 45)
-    Conteudo.Size = UDim2.new(1, -20, 1, -55)
-    Conteudo.BackgroundTransparency = 1
-    Conteudo.BorderSizePixel = 0
-    Conteudo.ScrollBarThickness = 4
-    Conteudo.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
-    Conteudo.CanvasSize = UDim2.new(0, 0, 0, 0)
+    -- Linha separadora embaixo do header
+    local HeaderLine = Instance.new("Frame")
+    HeaderLine.Parent = Janela
+    HeaderLine.Position = UDim2.new(0, 0, 0, 65)
+    HeaderLine.Size = UDim2.new(1, 0, 0, 1)
+    HeaderLine.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+    HeaderLine.BorderSizePixel = 0
+    HeaderLine.ZIndex = 2
 
-    -- Organiza os elementos em lista
-    local Lista = Instance.new("UIListLayout")
-    Lista.Parent = Conteudo
-    Lista.SortOrder = Enum.SortOrder.LayoutOrder
-    Lista.Padding = UDim.new(0, 6)
+    -- Logo/ícone (círculo laranja)
+    local LogoFrame = Instance.new("Frame")
+    LogoFrame.Parent = Header
+    LogoFrame.AnchorPoint = Vector2.new(0, 0.5)
+    LogoFrame.Position = UDim2.new(0, 16, 0.5, 0)
+    LogoFrame.Size = UDim2.new(0, 42, 0, 42)
+    LogoFrame.BackgroundColor3 = ACCENT
+    LogoFrame.BorderSizePixel = 0
+    LogoFrame.ZIndex = 3
+    corner(LogoFrame, 21)
 
-    -- Atualiza o tamanho do scroll automaticamente
-    Lista:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        Conteudo.CanvasSize = UDim2.new(0, 0, 0, Lista.AbsoluteContentSize.Y + 10)
+    local LogoText = Instance.new("TextLabel")
+    LogoText.Parent = LogoFrame
+    LogoText.Size = UDim2.new(1, 0, 1, 0)
+    LogoText.BackgroundTransparency = 1
+    LogoText.Font = Enum.Font.GothamBold
+    LogoText.Text = string.upper(string.sub(titulo, 1, 1))
+    LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    LogoText.TextSize = 20
+    LogoText.ZIndex = 4
+
+    -- Título e subtítulo
+    local TituloLabel = label(Header, {
+        Position = UDim2.new(0, 70, 0, 10),
+        Size = UDim2.new(0, 200, 0, 22),
+        Font = Enum.Font.GothamBold,
+        Text = titulo,
+        TextSize = 18,
+        ZIndex = 3
+    })
+
+    local SubtituloLabel = label(Header, {
+        Position = UDim2.new(0, 70, 0, 33),
+        Size = UDim2.new(0, 200, 0, 16),
+        Text = subtitulo,
+        TextColor3 = TEXT_SECONDARY,
+        TextSize = 13,
+        ZIndex = 3
+    })
+
+    -- FPS e Tempo no centro
+    local FpsLabel = label(Header, {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.38, 0),
+        Size = UDim2.new(0, 160, 0, 20),
+        Font = Enum.Font.GothamBold,
+        Text = "FPS: --",
+        TextSize = 15,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 3
+    })
+
+    local TimeLabel = label(Header, {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.68, 0),
+        Size = UDim2.new(0, 160, 0, 16),
+        Text = "Running Time: 0s",
+        TextColor3 = TEXT_SECONDARY,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 3
+    })
+
+    -- Botões do header (direita)
+    local function makeHeaderBtn(offsetX, icon, color, callback)
+        local Btn = Instance.new("TextButton")
+        Btn.Parent = Header
+        Btn.AnchorPoint = Vector2.new(1, 0.5)
+        Btn.Position = UDim2.new(1, offsetX, 0.5, 0)
+        Btn.Size = UDim2.new(0, 30, 0, 30)
+        Btn.BackgroundColor3 = BG_LIGHT
+        Btn.BorderSizePixel = 0
+        Btn.Font = Enum.Font.GothamBold
+        Btn.Text = icon
+        Btn.TextColor3 = color
+        Btn.TextSize = 15
+        Btn.AutoButtonColor = false
+        Btn.ZIndex = 4
+        corner(Btn, 6)
+
+        Btn.MouseEnter:Connect(function()
+            tween(Btn, {BackgroundColor3 = Color3.fromRGB(50, 50, 58)})
+        end)
+        Btn.MouseLeave:Connect(function()
+            tween(Btn, {BackgroundColor3 = BG_LIGHT})
+        end)
+        Btn.MouseButton1Click:Connect(callback)
+        return Btn
+    end
+
+    -- Botão X (destruir)
+    makeHeaderBtn(-12, "✕", Color3.fromRGB(220, 80, 80), function()
+        Gui:Destroy()
     end)
 
-    -- Arrastar a janela
+    -- Botão minimizar
+    local minimizado = false
+    makeHeaderBtn(-50, "–", TEXT_SECONDARY, function()
+        minimizado = not minimizado
+        tween(Janela, {Size = minimizado and UDim2.new(0, 700, 0, 65) or UDim2.new(0, 700, 0, 410)}, 0.3)
+    end)
+
+    -- FPS e tempo rodando
+    local startTime = tick()
+    RunService.RenderStepped:Connect(function()
+        local fps = math.floor(1 / RunService.RenderStepped:Wait())
+        FpsLabel.Text = "FPS: " .. tostring(math.floor(1/(select(2,RunService.RenderStepped:Wait()) or 0.016) + 0.5))
+        TimeLabel.Text = "Running Time: " .. tostring(math.floor(tick() - startTime)) .. "s"
+    end)
+
+    -- Atualiza FPS de forma mais eficiente
+    spawn(function()
+        while Gui.Parent do
+            local start = tick()
+            RunService.RenderStepped:Wait()
+            local fps = math.floor(1 / (tick() - start) + 0.5)
+            FpsLabel.Text = "FPS: " .. tostring(fps)
+            TimeLabel.Text = "Running Time: " .. tostring(math.floor(tick() - startTime)) .. "s"
+        end
+    end)
+
+    -- ═══════════════════ SIDEBAR ═══════════════════
+    local Sidebar = Instance.new("Frame")
+    Sidebar.Name = "Sidebar"
+    Sidebar.Parent = Janela
+    Sidebar.Position = UDim2.new(0, 0, 0, 66)
+    Sidebar.Size = UDim2.new(0, 200, 1, -66)
+    Sidebar.BackgroundColor3 = BG_MID
+    Sidebar.BorderSizePixel = 0
+    Sidebar.ZIndex = 2
+    corner(Sidebar, 10)
+
+    -- Tampa canto superior da sidebar
+    local SidebarTopCover = Instance.new("Frame")
+    SidebarTopCover.Parent = Sidebar
+    SidebarTopCover.Size = UDim2.new(1, 0, 0, 10)
+    SidebarTopCover.BackgroundColor3 = BG_MID
+    SidebarTopCover.BorderSizePixel = 0
+    SidebarTopCover.ZIndex = 2
+
+    -- Tampa canto direito da sidebar
+    local SidebarRightCover = Instance.new("Frame")
+    SidebarRightCover.Parent = Sidebar
+    SidebarRightCover.AnchorPoint = Vector2.new(1, 0)
+    SidebarRightCover.Position = UDim2.new(1, 0, 0, 0)
+    SidebarRightCover.Size = UDim2.new(0, 10, 1, 0)
+    SidebarRightCover.BackgroundColor3 = BG_MID
+    SidebarRightCover.BorderSizePixel = 0
+    SidebarRightCover.ZIndex = 2
+
+    -- Lista de abas
+    local TabList = Instance.new("Frame")
+    TabList.Parent = Sidebar
+    TabList.Position = UDim2.new(0, 0, 0, 8)
+    TabList.Size = UDim2.new(1, 0, 1, -70)
+    TabList.BackgroundTransparency = 1
+    TabList.ZIndex = 3
+
+    local TabListLayout = Instance.new("UIListLayout")
+    TabListLayout.Parent = TabList
+    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabListLayout.Padding = UDim.new(0, 2)
+
+    -- Info do jogador no rodapé da sidebar
+    local PlayerFrame = Instance.new("Frame")
+    PlayerFrame.Parent = Sidebar
+    PlayerFrame.AnchorPoint = Vector2.new(0, 1)
+    PlayerFrame.Position = UDim2.new(0, 0, 1, 0)
+    PlayerFrame.Size = UDim2.new(1, 0, 0, 60)
+    PlayerFrame.BackgroundColor3 = BG_DARK
+    PlayerFrame.BorderSizePixel = 0
+    PlayerFrame.ZIndex = 3
+    corner(PlayerFrame, 10)
+
+    local PlayerTopCover = Instance.new("Frame")
+    PlayerTopCover.Parent = PlayerFrame
+    PlayerTopCover.Size = UDim2.new(1, 0, 0, 10)
+    PlayerTopCover.BackgroundColor3 = BG_DARK
+    PlayerTopCover.BorderSizePixel = 0
+    PlayerTopCover.ZIndex = 3
+
+    local PlayerRightCover = Instance.new("Frame")
+    PlayerRightCover.Parent = PlayerFrame
+    PlayerRightCover.AnchorPoint = Vector2.new(1, 0)
+    PlayerRightCover.Position = UDim2.new(1, 0, 0, 0)
+    PlayerRightCover.Size = UDim2.new(0, 10, 1, 0)
+    PlayerRightCover.BackgroundColor3 = BG_DARK
+    PlayerRightCover.BorderSizePixel = 0
+    PlayerRightCover.ZIndex = 3
+
+    -- Avatar do jogador
+    local AvatarFrame = Instance.new("Frame")
+    AvatarFrame.Parent = PlayerFrame
+    AvatarFrame.AnchorPoint = Vector2.new(0, 0.5)
+    AvatarFrame.Position = UDim2.new(0, 12, 0.5, 0)
+    AvatarFrame.Size = UDim2.new(0, 36, 0, 36)
+    AvatarFrame.BackgroundColor3 = ACCENT
+    AvatarFrame.BorderSizePixel = 0
+    AvatarFrame.ZIndex = 4
+    corner(AvatarFrame, 18)
+
+    local AvatarImg = Instance.new("ImageLabel")
+    AvatarImg.Parent = AvatarFrame
+    AvatarImg.Size = UDim2.new(1, 0, 1, 0)
+    AvatarImg.BackgroundTransparency = 1
+    AvatarImg.ZIndex = 5
+    corner(AvatarImg, 18)
+    spawn(function()
+        local userId = Player.UserId
+        local ok, thumb = pcall(function()
+            return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+        end)
+        if ok then AvatarImg.Image = thumb end
+    end)
+
+    label(PlayerFrame, {
+        Position = UDim2.new(0, 56, 0, 10),
+        Size = UDim2.new(1, -60, 0, 18),
+        Font = Enum.Font.GothamBold,
+        Text = Player.DisplayName,
+        TextSize = 14,
+        ZIndex = 4
+    })
+
+    label(PlayerFrame, {
+        Position = UDim2.new(0, 56, 0, 30),
+        Size = UDim2.new(1, -60, 0, 14),
+        Text = "@" .. Player.Name,
+        TextColor3 = TEXT_SECONDARY,
+        TextSize = 12,
+        ZIndex = 4
+    })
+
+    -- Linha divisória sidebar
+    local SidebarLine = Instance.new("Frame")
+    SidebarLine.Parent = Janela
+    SidebarLine.Position = UDim2.new(0, 200, 0, 66)
+    SidebarLine.Size = UDim2.new(0, 1, 1, -66)
+    SidebarLine.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+    SidebarLine.BorderSizePixel = 0
+    SidebarLine.ZIndex = 2
+
+    -- ═══════════════════ ÁREA DE CONTEÚDO ═══════════════════
+    local ContentArea = Instance.new("Frame")
+    ContentArea.Name = "ContentArea"
+    ContentArea.Parent = Janela
+    ContentArea.Position = UDim2.new(0, 201, 0, 66)
+    ContentArea.Size = UDim2.new(1, -201, 1, -66)
+    ContentArea.BackgroundTransparency = 1
+    ContentArea.ClipsDescendants = true
+    ContentArea.ZIndex = 2
+
+    -- ═══════════════════ DRAG ═══════════════════
     local arrastando = false
     local posicaoMouse, posicaoJanela
 
@@ -86,118 +386,492 @@ function RewimLib:CreateWindow(titulo)
         if arrastando and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - posicaoMouse
             Janela.Position = UDim2.new(
-                posicaoJanela.X.Scale,
-                posicaoJanela.X.Offset + delta.X,
-                posicaoJanela.Y.Scale,
-                posicaoJanela.Y.Offset + delta.Y
+                posicaoJanela.X.Scale, posicaoJanela.X.Offset + delta.X,
+                posicaoJanela.Y.Scale, posicaoJanela.Y.Offset + delta.Y
+            )
+            Shadow.Position = UDim2.new(
+                Janela.Position.X.Scale, Janela.Position.X.Offset,
+                Janela.Position.Y.Scale, Janela.Position.Y.Offset + 8
             )
         end
     end)
 
-    local Elementos = {}
-    
-        function Elementos:CreateButton(nome, callback)
+    -- ═══════════════════ TABS ═══════════════════
+    local Window = {}
+    local tabAtual = nil
+    local tabOrder = 0
+
+    local ICONS = {
+        ["⚙"] = "⚙", ["⚔"] = "⚔", ["📦"] = "📦", ["🌾"] = "🌾",
+        ["🗡"] = "🗡", ["💎"] = "💎", ["🔧"] = "🔧", ["📋"] = "📋"
+    }
+
+    function Window:CreateTab(nome, descricao, icone)
+        descricao = descricao or ""
+        icone = icone or "◈"
+        tabOrder = tabOrder + 1
+        local ordem = tabOrder
+
+        -- Página de conteúdo
+        local Pagina = Instance.new("ScrollingFrame")
+        Pagina.Name = nome .. "_Page"
+        Pagina.Parent = ContentArea
+        Pagina.Size = UDim2.new(1, 0, 1, 0)
+        Pagina.Position = UDim2.new(0, 0, 0, 0)
+        Pagina.BackgroundTransparency = 1
+        Pagina.BorderSizePixel = 0
+        Pagina.ScrollBarThickness = 4
+        Pagina.ScrollBarImageColor3 = Color3.fromRGB(70, 70, 80)
+        Pagina.CanvasSize = UDim2.new(0, 0, 0, 0)
+        Pagina.Visible = (ordem == 1)
+        Pagina.ZIndex = 3
+
+        local PaginaLayout = Instance.new("UIListLayout")
+        PaginaLayout.Parent = Pagina
+        PaginaLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        PaginaLayout.Padding = UDim.new(0, 8)
+
+        local PaginaPadding = Instance.new("UIPadding")
+        PaginaPadding.Parent = Pagina
+        PaginaPadding.PaddingTop = UDim.new(0, 12)
+        PaginaPadding.PaddingLeft = UDim.new(0, 14)
+        PaginaPadding.PaddingRight = UDim.new(0, 14)
+
+        PaginaLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            Pagina.CanvasSize = UDim2.new(0, 0, 0, PaginaLayout.AbsoluteContentSize.Y + 24)
+        end)
+
+        -- Botão da aba na sidebar
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Parent = TabList
+        TabBtn.Size = UDim2.new(1, -16, 0, 52)
+        TabBtn.BackgroundColor3 = ordem == 1 and BG_LIGHT or BG_MID
+        TabBtn.BorderSizePixel = 0
+        TabBtn.Text = ""
+        TabBtn.AutoButtonColor = false
+        TabBtn.ZIndex = 4
+        TabBtn.LayoutOrder = ordem
+        corner(TabBtn, 6)
+
+        -- Indicador laranja lateral
+        local Indicator = Instance.new("Frame")
+        Indicator.Parent = TabBtn
+        Indicator.Size = UDim2.new(0, 3, 0, 28)
+        Indicator.AnchorPoint = Vector2.new(0, 0.5)
+        Indicator.Position = UDim2.new(0, 0, 0.5, 0)
+        Indicator.BackgroundColor3 = ACCENT
+        Indicator.BorderSizePixel = 0
+        Indicator.Visible = (ordem == 1)
+        Indicator.ZIndex = 5
+        corner(Indicator, 2)
+
+        -- Ícone
+        local IconLabel = Instance.new("TextLabel")
+        IconLabel.Parent = TabBtn
+        IconLabel.Position = UDim2.new(0, 14, 0, 8)
+        IconLabel.Size = UDim2.new(0, 22, 0, 22)
+        IconLabel.BackgroundTransparency = 1
+        IconLabel.Font = Enum.Font.GothamBold
+        IconLabel.Text = icone
+        IconLabel.TextColor3 = ordem == 1 and ACCENT or TEXT_SECONDARY
+        IconLabel.TextSize = 16
+        IconLabel.ZIndex = 5
+
+        -- Nome da aba
+        local TabNomeLabel = label(TabBtn, {
+            Position = UDim2.new(0, 40, 0, 7),
+            Size = UDim2.new(1, -44, 0, 20),
+            Font = Enum.Font.GothamBold,
+            Text = nome,
+            TextColor3 = ordem == 1 and TEXT_PRIMARY or TEXT_SECONDARY,
+            TextSize = 14,
+            ZIndex = 5
+        })
+
+        -- Descrição da aba
+        local TabDescLabel = label(TabBtn, {
+            Position = UDim2.new(0, 40, 0, 29),
+            Size = UDim2.new(1, -44, 0, 14),
+            Text = descricao,
+            TextColor3 = TEXT_SECONDARY,
+            TextSize = 12,
+            ZIndex = 5
+        })
+
+        local function ativarAba()
+            -- Esconde todas as páginas
+            for _, v in pairs(ContentArea:GetChildren()) do
+                if v:IsA("ScrollingFrame") then v.Visible = false end
+            end
+            -- Reseta todos os botões
+            for _, v in pairs(TabList:GetChildren()) do
+                if v:IsA("TextButton") then
+                    tween(v, {BackgroundColor3 = BG_MID})
+                    if v:FindFirstChild("Frame") then
+                        v.Frame.Visible = false
+                    end
+                    for _, c in pairs(v:GetChildren()) do
+                        if c:IsA("TextLabel") then
+                            if c.TextSize == 16 then
+                                tween(c, {TextColor3 = TEXT_SECONDARY})
+                            elseif c.TextSize == 14 then
+                                tween(c, {TextColor3 = TEXT_SECONDARY})
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- Ativa esta aba
+            Pagina.Visible = true
+            tween(TabBtn, {BackgroundColor3 = BG_LIGHT})
+            Indicator.Visible = true
+            tween(IconLabel, {TextColor3 = ACCENT})
+            tween(TabNomeLabel, {TextColor3 = TEXT_PRIMARY})
+        end
+
+        TabBtn.MouseButton1Click:Connect(ativarAba)
+
+        TabBtn.MouseEnter:Connect(function()
+            if not Pagina.Visible then
+                tween(TabBtn, {BackgroundColor3 = BG_LIGHT})
+            end
+        end)
+        TabBtn.MouseLeave:Connect(function()
+            if not Pagina.Visible then
+                tween(TabBtn, {BackgroundColor3 = BG_MID})
+            end
+        end)
+
+        -- ═══════════════════ ELEMENTOS DA PÁGINA ═══════════════════
+        local Tab = {}
+
+        local function newElement(height)
+            local F = Instance.new("Frame")
+            F.Parent = Pagina
+            F.Size = UDim2.new(1, 0, 0, height)
+            F.BackgroundColor3 = BG_LIGHT
+            F.BorderSizePixel = 0
+            corner(F, 7)
+            local S = Instance.new("UIStroke")
+            S.Color = Color3.fromRGB(48, 48, 56)
+            S.Thickness = 1
+            S.Parent = F
+            return F
+        end
+
+        function Tab:CreateButton(nome, callback)
             callback = callback or function() end
+            local F = newElement(40)
+            F.ZIndex = 4
 
-            local Botao = Instance.new("TextButton")
-            Botao.Parent = Conteudo
-            Botao.Size = UDim2.new(1, 0, 0, 35)
-            Botao.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            Botao.BorderSizePixel = 0
-            Botao.Font = Enum.Font.GothamSemibold
-            Botao.Text = nome
-            Botao.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Botao.TextSize = 15
-            Botao.AutoButtonColor = false
-            Instance.new("UICorner", Botao).CornerRadius = UDim.new(0, 5)
+            local Btn = Instance.new("TextButton")
+            Btn.Parent = F
+            Btn.Size = UDim2.new(1, 0, 1, 0)
+            Btn.BackgroundTransparency = 1
+            Btn.Font = Enum.Font.GothamSemibold
+            Btn.Text = "  " .. nome
+            Btn.TextColor3 = TEXT_PRIMARY
+            Btn.TextSize = 14
+            Btn.TextXAlignment = Enum.TextXAlignment.Left
+            Btn.AutoButtonColor = false
+            Btn.ZIndex = 5
 
-            -- Efeito ao passar o mouse
-            Botao.MouseEnter:Connect(function()
-                TweenService:Create(Botao, TweenInfo.new(0.2), {
-                    BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-                }):Play()
+            local Arrow = label(F, {
+                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, -14, 0.5, 0),
+                Size = UDim2.new(0, 20, 0, 20),
+                Text = "›",
+                TextColor3 = ACCENT,
+                TextSize = 20,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                ZIndex = 5
+            })
+
+            Btn.MouseEnter:Connect(function()
+                tween(F, {BackgroundColor3 = Color3.fromRGB(40, 40, 46)})
             end)
-
-            Botao.MouseLeave:Connect(function()
-                TweenService:Create(Botao, TweenInfo.new(0.2), {
-                    BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-                }):Play()
+            Btn.MouseLeave:Connect(function()
+                tween(F, {BackgroundColor3 = BG_LIGHT})
             end)
-
-            Botao.MouseButton1Click:Connect(function()
+            Btn.MouseButton1Click:Connect(function()
+                tween(F, {BackgroundColor3 = Color3.fromRGB(50, 50, 58)})
+                task.delay(0.15, function()
+                    tween(F, {BackgroundColor3 = BG_LIGHT})
+                end)
                 pcall(callback)
             end)
         end
 
-        function Elementos:CreateToggle(nome, padrao, callback)
+        function Tab:CreateToggle(nome, padrao, callback)
             padrao = padrao or false
             callback = callback or function() end
-
             local ativado = padrao
+            local F = newElement(40)
+            F.ZIndex = 4
 
-            local Frame = Instance.new("Frame")
-            Frame.Parent = Conteudo
-            Frame.Size = UDim2.new(1, 0, 0, 35)
-            Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            Frame.BorderSizePixel = 0
-            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 5)
+            label(F, {
+                Position = UDim2.new(0, 14, 0, 0),
+                Size = UDim2.new(0.7, 0, 1, 0),
+                Font = Enum.Font.GothamSemibold,
+                Text = nome,
+                TextSize = 14,
+                ZIndex = 5
+            })
 
-            local NomeLabel = Instance.new("TextLabel")
-            NomeLabel.Parent = Frame
-            NomeLabel.Position = UDim2.new(0, 10, 0, 0)
-            NomeLabel.Size = UDim2.new(0.7, 0, 1, 0)
-            NomeLabel.BackgroundTransparency = 1
-            NomeLabel.Font = Enum.Font.GothamSemibold
-            NomeLabel.Text = nome
-            NomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-            NomeLabel.TextSize = 15
-            NomeLabel.TextXAlignment = Enum.TextXAlignment.Left
+            local Fundo = Instance.new("Frame")
+            Fundo.Parent = F
+            Fundo.AnchorPoint = Vector2.new(1, 0.5)
+            Fundo.Position = UDim2.new(1, -14, 0.5, 0)
+            Fundo.Size = UDim2.new(0, 42, 0, 22)
+            Fundo.BackgroundColor3 = ativado and ACCENT or TOGGLE_OFF
+            Fundo.BorderSizePixel = 0
+            Fundo.ZIndex = 5
+            corner(Fundo, 11)
 
-            -- Fundo do toggle
-            local ToggleFundo = Instance.new("Frame")
-            ToggleFundo.Parent = Frame
-            ToggleFundo.AnchorPoint = Vector2.new(1, 0.5)
-            ToggleFundo.Position = UDim2.new(1, -10, 0.5, 0)
-            ToggleFundo.Size = UDim2.new(0, 40, 0, 20)
-            ToggleFundo.BackgroundColor3 = ativado and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(70, 70, 70)
-            ToggleFundo.BorderSizePixel = 0
-            Instance.new("UICorner", ToggleFundo).CornerRadius = UDim.new(1, 0)
-
-            -- Bolinha do toggle
             local Bolinha = Instance.new("Frame")
-            Bolinha.Parent = ToggleFundo
+            Bolinha.Parent = Fundo
             Bolinha.AnchorPoint = Vector2.new(0.5, 0.5)
-            Bolinha.Position = ativado and UDim2.new(0.75, 0, 0.5, 0) or UDim2.new(0.25, 0, 0.5, 0)
-            Bolinha.Size = UDim2.new(0, 14, 0, 14)
+            Bolinha.Position = ativado and UDim2.new(0.72, 0, 0.5, 0) or UDim2.new(0.28, 0, 0.5, 0)
+            Bolinha.Size = UDim2.new(0, 15, 0, 15)
             Bolinha.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             Bolinha.BorderSizePixel = 0
-            Instance.new("UICorner", Bolinha).CornerRadius = UDim.new(1, 0)
+            Bolinha.ZIndex = 6
+            corner(Bolinha, 8)
 
-            -- Clique no frame inteiro
             local Clique = Instance.new("TextButton")
-            Clique.Parent = Frame
+            Clique.Parent = F
             Clique.Size = UDim2.new(1, 0, 1, 0)
             Clique.BackgroundTransparency = 1
             Clique.Text = ""
+            Clique.ZIndex = 6
 
             Clique.MouseButton1Click:Connect(function()
                 ativado = not ativado
-
-                TweenService:Create(ToggleFundo, TweenInfo.new(0.2), {
-                    BackgroundColor3 = ativado and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(70, 70, 70)
-                }):Play()
-
-                TweenService:Create(Bolinha, TweenInfo.new(0.2), {
-                    Position = ativado and UDim2.new(0.75, 0, 0.5, 0) or UDim2.new(0.25, 0, 0.5, 0)
-                }):Play()
-
+                tween(Fundo, {BackgroundColor3 = ativado and ACCENT or TOGGLE_OFF})
+                tween(Bolinha, {Position = ativado and UDim2.new(0.72, 0, 0.5, 0) or UDim2.new(0.28, 0, 0.5, 0)})
                 pcall(callback, ativado)
             end)
 
             pcall(callback, ativado)
+
+            return {
+                SetValue = function(_, val)
+                    if val ~= ativado then
+                        ativado = val
+                        tween(Fundo, {BackgroundColor3 = ativado and ACCENT or TOGGLE_OFF})
+                        tween(Bolinha, {Position = ativado and UDim2.new(0.72, 0, 0.5, 0) or UDim2.new(0.28, 0, 0.5, 0)})
+                        pcall(callback, ativado)
+                    end
+                end
+            }
         end
 
-    return Elementos
+        function Tab:CreateSlider(nome, min, max, padrao, callback)
+            callback = callback or function() end
+            padrao = math.clamp(padrao or min, min, max)
+            local F = newElement(56)
+            F.ZIndex = 4
+
+            label(F, {
+                Position = UDim2.new(0, 14, 0, 8),
+                Size = UDim2.new(0.7, 0, 0, 20),
+                Font = Enum.Font.GothamSemibold,
+                Text = nome,
+                TextSize = 14,
+                ZIndex = 5
+            })
+
+            local ValorLabel = label(F, {
+                AnchorPoint = Vector2.new(1, 0),
+                Position = UDim2.new(1, -14, 0, 8),
+                Size = UDim2.new(0, 60, 0, 20),
+                Font = Enum.Font.GothamBold,
+                Text = tostring(padrao),
+                TextColor3 = ACCENT,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Right,
+                ZIndex = 5
+            })
+
+            local Trilho = Instance.new("Frame")
+            Trilho.Parent = F
+            Trilho.Position = UDim2.new(0, 14, 0, 36)
+            Trilho.Size = UDim2.new(1, -28, 0, 5)
+            Trilho.BackgroundColor3 = TOGGLE_OFF
+            Trilho.BorderSizePixel = 0
+            Trilho.ZIndex = 5
+            corner(Trilho, 3)
+
+            local Progresso = Instance.new("Frame")
+            Progresso.Parent = Trilho
+            Progresso.Size = UDim2.new((padrao - min) / (max - min), 0, 1, 0)
+            Progresso.BackgroundColor3 = ACCENT
+            Progresso.BorderSizePixel = 0
+            Progresso.ZIndex = 6
+            corner(Progresso, 3)
+
+            local Knob = Instance.new("Frame")
+            Knob.Parent = Progresso
+            Knob.AnchorPoint = Vector2.new(0.5, 0.5)
+            Knob.Position = UDim2.new(1, 0, 0.5, 0)
+            Knob.Size = UDim2.new(0, 13, 0, 13)
+            Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            Knob.BorderSizePixel = 0
+            Knob.ZIndex = 7
+            corner(Knob, 7)
+
+            local HitArea = Instance.new("TextButton")
+            HitArea.Parent = Trilho
+            HitArea.Size = UDim2.new(1, 0, 0, 24)
+            HitArea.AnchorPoint = Vector2.new(0, 0.5)
+            HitArea.Position = UDim2.new(0, 0, 0.5, 0)
+            HitArea.BackgroundTransparency = 1
+            HitArea.Text = ""
+            HitArea.ZIndex = 8
+
+            local arrastando = false
+
+            local function atualizar(x)
+                local rel = math.clamp((x - Trilho.AbsolutePosition.X) / Trilho.AbsoluteSize.X, 0, 1)
+                local valor = math.floor(min + (max - min) * rel)
+                tween(Progresso, {Size = UDim2.new(rel, 0, 1, 0)}, 0.05)
+                ValorLabel.Text = tostring(valor)
+                pcall(callback, valor)
+            end
+
+            HitArea.MouseButton1Down:Connect(function(x, y)
+                arrastando = true
+                atualizar(x)
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    arrastando = false
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(input)
+                if arrastando and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    atualizar(input.Position.X)
+                end
+            end)
+
+            pcall(callback, padrao)
+        end
+
+        function Tab:CreateDropdown(nome, lista, callback)
+            callback = callback or function() end
+            local aberto = false
+            local alturaItem = 36
+            local alturaDrop = #lista * alturaItem + 8
+
+            local F = newElement(40)
+            F.ClipsDescendants = true
+            F.ZIndex = 4
+
+            label(F, {
+                Position = UDim2.new(0, 14, 0, 0),
+                Size = UDim2.new(0.7, 0, 0, 40),
+                Font = Enum.Font.GothamSemibold,
+                Text = nome .. ": Selecione",
+                TextSize = 14,
+                ZIndex = 5
+            })
+
+            local Seta = label(F, {
+                AnchorPoint = Vector2.new(1, 0),
+                Position = UDim2.new(1, -14, 0, 0),
+                Size = UDim2.new(0, 20, 0, 40),
+                Font = Enum.Font.GothamBold,
+                Text = "▾",
+                TextColor3 = ACCENT,
+                TextSize = 18,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                ZIndex = 5
+            })
+
+            -- Divisória
+            local Div = Instance.new("Frame")
+            Div.Parent = F
+            Div.Position = UDim2.new(0, 10, 0, 40)
+            Div.Size = UDim2.new(1, -20, 0, 1)
+            Div.BackgroundColor3 = Color3.fromRGB(48, 48, 56)
+            Div.BorderSizePixel = 0
+            Div.ZIndex = 5
+
+            -- Itens
+            for i, item in ipairs(lista) do
+                local Item = Instance.new("TextButton")
+                Item.Parent = F
+                Item.Position = UDim2.new(0, 6, 0, 41 + (i - 1) * alturaItem + 4)
+                Item.Size = UDim2.new(1, -12, 0, alturaItem - 4)
+                Item.BackgroundColor3 = BG_MID
+                Item.BorderSizePixel = 0
+                Item.Font = Enum.Font.GothamSemibold
+                Item.Text = "  " .. item
+                Item.TextColor3 = TEXT_SECONDARY
+                Item.TextSize = 13
+                Item.TextXAlignment = Enum.TextXAlignment.Left
+                Item.AutoButtonColor = false
+                Item.ZIndex = 6
+                corner(Item, 5)
+
+                Item.MouseEnter:Connect(function()
+                    tween(Item, {TextColor3 = TEXT_PRIMARY})
+                    tween(Item, {BackgroundColor3 = BG_LIGHT})
+                end)
+                Item.MouseLeave:Connect(function()
+                    tween(Item, {TextColor3 = TEXT_SECONDARY})
+                    tween(Item, {BackgroundColor3 = BG_MID})
+                end)
+                Item.MouseButton1Click:Connect(function()
+                    aberto = false
+                    tween(F, {Size = UDim2.new(1, 0, 0, 40)}, 0.25)
+                    Seta.Text = "▾"
+                    -- Atualiza o texto do label
+                    for _, c in pairs(F:GetChildren()) do
+                        if c:IsA("TextLabel") and c.TextSize == 14 then
+                            c.Text = nome .. ": " .. item
+                        end
+                    end
+                    pcall(callback, item)
+                end)
+            end
+
+            local HitTop = Instance.new("TextButton")
+            HitTop.Parent = F
+            HitTop.Size = UDim2.new(1, 0, 0, 40)
+            HitTop.BackgroundTransparency = 1
+            HitTop.Text = ""
+            HitTop.ZIndex = 7
+
+            HitTop.MouseButton1Click:Connect(function()
+                aberto = not aberto
+                tween(F, {Size = aberto and UDim2.new(1, 0, 0, 40 + alturaDrop) or UDim2.new(1, 0, 0, 40)}, 0.25)
+                Seta.Text = aberto and "▴" or "▾"
+            end)
+        end
+
+        function Tab:CreateLabel(texto)
+            local F = newElement(32)
+            F.ZIndex = 4
+            F.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
+
+            label(F, {
+                Position = UDim2.new(0, 14, 0, 0),
+                Size = UDim2.new(1, -14, 1, 0),
+                Text = texto,
+                TextColor3 = TEXT_SECONDARY,
+                TextSize = 13,
+                ZIndex = 5
+            })
+        end
+
+        return Tab
+    end
+
+    return Window
 end
 
 return RewimLib
