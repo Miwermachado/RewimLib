@@ -196,23 +196,31 @@ end
               }),
               Utilities:Create("Frame", {
                   Name = "TabContainer",
-                  Size = UDim2.new(1, 0, 0, 26),
+                  Size = UDim2.new(1, -26, 0, 26),
                   BackgroundTransparency = 1,
                   ClipsDescendants = true
               }, {
                   Utilities:Create("UIListLayout", {
                       FillDirection = Enum.FillDirection.Horizontal
                   })
+              }),
+              Utilities:Create("TextButton", {
+                  Name = "UnloadButton",
+                  Size = UDim2.new(0, 26, 0, 26),
+                  Position = UDim2.new(1, -26, 0, 0),
+                  BackgroundTransparency = 1,
+                  Text = "X",
+                  TextSize = 14,
+                  Font = Enum.Font.SourceSansBold,
+                  TextColor3 = Colors.SecondaryText,
+                  ZIndex = DropIndex + 10
               })
           })
       })
   })
 
-  UserInputService.InputBegan:Connect(function(Input, GameProcessed)
-    if Input.KeyCode == Enum.KeyCode.LeftAlt and not GameProcessed then
-        Window.Main.Visible = not Window.Main.Visible
-    end
-  end)
+  -- Hotkey de abrir/fechar removida daqui.
+  -- O script principal controla a tecla de Toggle UI pela aba Settings.
 
   -- Console removido da interface.
   -- Mantém as funções abaixo como no-op para compatibilidade com scripts que chamem Window:Message() ou Window:ToggleConsole().
@@ -221,6 +229,51 @@ end
 
   function WindowTable:Message(consoleArgs)
   end
+
+  local UnloadButton = Window.Main.Topbar.UnloadButton
+
+  function WindowTable:SetUnloadCallback(callback)
+    self._UnloadCallback = callback
+  end
+
+  function WindowTable:SetVisible(bool)
+    if Window and Window:FindFirstChild("Main") then
+      Window.Main.Visible = bool and true or false
+    end
+  end
+
+  function WindowTable:IsVisible()
+    return Window and Window:FindFirstChild("Main") and Window.Main.Visible or false
+  end
+
+  function WindowTable:ToggleVisible()
+    self:SetVisible(not self:IsVisible())
+  end
+
+  function WindowTable:Unload()
+    if self._Unloaded then return end
+    self._Unloaded = true
+
+    if self._UnloadCallback then
+      pcall(self._UnloadCallback)
+    end
+
+    pcall(function()
+      Window:Destroy()
+    end)
+  end
+
+  UnloadButton.MouseEnter:Connect(function()
+    Utilities:Tween(UnloadButton, .125, {TextColor3 = Colors.Accent})
+  end)
+
+  UnloadButton.MouseLeave:Connect(function()
+    Utilities:Tween(UnloadButton, .125, {TextColor3 = Colors.SecondaryText})
+  end)
+
+  UnloadButton.MouseButton1Click:Connect(function()
+    WindowTable:Unload()
+  end)
 
 
   if syn and syn.protect_gui then
@@ -325,11 +378,11 @@ end
   end)
   
   function WindowTable:Exit()
-      Window:Destroy()
+      self:Unload()
   end
   
   function WindowTable:Toggle()
-      Window.Enabled = not Window.Enabled
+      self:ToggleVisible()
   end
   
   function WindowTable:Tab(TabArgs)
